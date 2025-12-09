@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tom's GPU UI Designer (Exact Render)</title>
+    <style>
+        :root {
+            --bg-dark: #1e1e1e;
+            --panel-bg: #252526;
+            --border: #3e3e42;
+            --text-main: #cccccc;
+            --text-header: #e7e7e7;
+            --accent: #007acc;
+            --accent-hover: #0062a3;
+            --input-bg: #3c3c3c;
+            --canvas-bg: #000000;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 13px;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Layout */
+        header {
+            background-color: var(--panel-bg);
+            border-bottom: 1px solid var(--border);
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 { margin: 0; font-size: 16px; color: var(--text-header); font-weight: 600; }
+
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Sidebar Tools */
+        .sidebar {
+            width: 250px;
+            background-color: var(--panel-bg);
+            border-right: 1px solid var(--border);
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            overflow-y: auto;
+        }
+
+        .section-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: var(--text-header);
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 0.5px;
+        }
+
+        /* Canvas Area */
+        .workspace {
+            flex: 1;
+            background-color: #121212;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: auto;
+        }
+
+        .monitor-wrapper {
+            border: 1px solid var(--border);
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            width: 576px; /* 192 * 3 */
+            height: 384px; /* 128 * 3 */
+            position: relative;
+        }
+
+        canvas {
+            image-rendering: pixelated;
+            width: 100%;
+            height: 100%;
+            cursor: crosshair;
+        }
+
+        /* Properties Panel */
+        .properties {
+            width: 300px;
+            background-color: var(--panel-bg);
+            border-left: 1px solid var(--border);
+            padding: 15px;
+            overflow-y: auto;
+        }
+
+        /* Controls */
+        button {
+            background-color: var(--input-bg);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 6px 12px;
+            cursor: pointer;
+            width: 100%;
+            text-align: left;
+            margin-bottom: 5px;
+            transition: background 0.1s;
+        }
+
+        button:hover { background-color: #4a4a4a; }
+
+        button.primary {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            text-align: center;
+            font-weight: 600;
+        }
+        button.primary:hover { background-color: var(--accent-hover); }
+
+        button.danger {
+            background-color: #a12626;
+            color: white;
+            border: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 11px;
+            color: #aaaaaa;
+        }
+
+        input[type="text"], input[type="number"], select {
+            width: 100%;
+            background-color: var(--input-bg);
+            border: 1px solid var(--border);
+            color: var(--text-header);
+            padding: 4px 6px;
+            box-sizing: border-box;
+        }
+
+        input[type="color"] {
+            width: 100%;
+            background-color: var(--input-bg);
+            border: 1px solid var(--border);
+            height: 25px;
+            padding: 0;
+            cursor: pointer;
+        }
+
+        input:focus {
+            outline: 1px solid var(--accent);
+            border-color: var(--accent);
+        }
+
+        .row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .row .form-group {
+            flex: 1;
+        }
+
+        /* Code Output */
+        #code-output {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 200px;
+            background-color: #121212;
+            border-top: 1px solid var(--accent);
+            z-index: 200;
+            transform: translateY(100%);
+            transition: transform 0.3s;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #code-output.active {
+            transform: translateY(0);
+        }
+
+        .code-header {
+            background-color: var(--panel-bg);
+            padding: 5px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+        }
+
+        textarea {
+            flex: 1;
+            background-color: #0d0d0d;
+            color: #d4d4d4;
+            border: none;
+            padding: 15px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            resize: none;
+            font-size: 12px;
+        }
+
+        .helper-text {
+            font-size: 10px;
+            color: #666;
+            margin-top: 2px;
+            font-style: italic;
+        }
+
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>ComputerCraft BaseUI Designer (Exact GPU Render)</h1>
+    <div>
+        <button class="primary" onclick="generateLua()" style="width: auto; display: inline-block;">Generate Lua</button>
+    </div>
+</header>
+
+<div class="main-container">
+    <div class="sidebar">
+        <div class="section-title">Global Settings</div>
+        <div class="form-group">
+            <label>Background Image</label>
+            <input type="file" id="bg-upload" accept="image/*" onchange="handleBgUpload(this)">
+            <div class="helper-text">Simulates baseUI.setBackgroundToImage</div>
+        </div>
+
+        <div class="section-title" style="margin-top: 20px;">Add Component</div>
+        <button onclick="addElement('button')">Add Button</button>
+        <button onclick="addElement('text')">Add TextLabel</button>
+        <button onclick="addElement('image')">Add ImageLabel</button>
+
+        <div style="margin-top: auto; padding-top: 20px; border-top: 1px solid var(--border);">
+            <div class="helper-text">
+                <b>Canvas Size:</b> 192 x 128<br>
+                <b>Rendering:</b> Native Pixel Buffer
+            </div>
+        </div>
+    </div>
+
+    <div class="workspace">
+        <div class="monitor-wrapper">
+            <canvas id="gpuCanvas" width="192" height="128"></canvas>
+        </div>
+    </div>
+
+    <div class="properties" id="prop-panel">
+        <div class="section-title">Properties</div>
+        <div id="no-selection" style="padding: 20px 0; color: #666;">
+            Select an element on the screen to edit.
+        </div>
+
+        <div id="prop-form" style="display: none;">
+            <div class="section-title" style="margin-top:10px; color: var(--accent);">Transform</div>
+            <div class="row">
+                <div class="form-group">
+                    <label>X (px)</label>
+                    <input type="number" id="p-x" oninput="updateElement()">
+                </div>
+                <div class="form-group">
+                    <label>Y (px)</label>
+                    <input type="number" id="p-y" oninput="updateElement()">
+                </div>
+            </div>
+            <div class="row">
+                <div class="form-group">
+                    <label>Width</label>
+                    <input type="number" id="p-w" oninput="updateElement()">
+                </div>
+                <div class="form-group">
+                    <label>Height</label>
+                    <input type="number" id="p-h" oninput="updateElement()">
+                </div>
+            </div>
+
+            <div class="section-title" style="margin-top:10px; color: var(--accent);">Content & Style</div>
+
+            <div class="form-group" id="group-text">
+                <label>Text</label>
+                <input type="text" id="p-text" oninput="updateElement()">
+            </div>
+
+            <div class="form-group" id="group-image">
+                <label>Image Path (Lua)</label>
+                <input type="text" id="p-img-path" oninput="updateElement()" placeholder="atm/Images/...">
+                <label style="margin-top:5px">Scale</label>
+                <input type="number" id="p-img-scale" value="1" min="1" oninput="updateElement()">
+            </div>
+
+            <div class="form-group" id="group-color">
+                <label>Background Color Variable</label>
+                <input type="text" id="p-color-var" placeholder="colors.gc" oninput="updateElement()">
+                <div class="helper-text">Lua variable name</div>
+                <input type="color" id="p-color-hex" style="margin-top:2px;" oninput="updateElement()">
+                <div class="helper-text">Visual Preview Color</div>
+            </div>
+
+             <div class="form-group" id="group-text-color">
+                <label>Text Color Variable</label>
+                <input type="text" id="p-tcolor-var" placeholder="colors.tc" oninput="updateElement()">
+                 <input type="color" id="p-tcolor-hex" value="#ffffff" style="margin-top:2px;" oninput="updateElement()">
+            </div>
+
+            <div class="form-group" id="group-stroke-color">
+                <label>Stroke Color Variable</label>
+                <input type="text" id="p-scolor-var" placeholder="colors.darkerGc" oninput="updateElement()">
+                 <input type="color" id="p-scolor-hex" value="#004d40" style="margin-top:2px;" oninput="updateElement()">
+            </div>
+
+            <div class="form-group" id="group-radius">
+                <label>Corner Radius</label>
+                <input type="number" id="p-radius" value="0" min="0" max="6" oninput="updateElement()">
+            </div>
+
+            <div class="section-title" style="margin-top:10px; color: var(--accent);">Logic</div>
+
+            <div class="form-group" id="group-click">
+                <label>On Click (Function Name)</label>
+                <input type="text" id="p-click" placeholder="function() ... end">
+            </div>
+
+            <div class="form-group" id="group-sound">
+                <label>Sound File</label>
+                <input type="text" id="p-sound" placeholder="atm/audio/click.dfpwm">
+                <div class="row" style="margin-top: 5px;">
+                     <label><input type="checkbox" id="p-sound-toggle"> Enable Sound</label>
+                </div>
+            </div>
+
+            <button class="danger" onclick="deleteElement()">Delete Element</button>
+        </div>
+    </div>
+</div>
+
+<div id="code-output">
+    <div class="code-header">
+        <span>Generated Lua Code</span>
+        <button onclick="document.getElementById('code-output').classList.remove('active')" style="width:auto; padding: 2px 8px;">Close</button>
+    </div>
+    <textarea id="lua-result" readonly></textarea>
+</div>
+
+<script>
+    // --- TOM'S GPU EMULATION ENGINE ---
+
+    // Default Font (Minimal ASCII Fallback in case fetch fails)
+    // Format: Height(1), Width(1), Data(16 ints)
+    // This is just a placeholder. The system will try to load real fonts.
+    const DEFAULT_FONT = {
+        height: 8,
+        widths: new Array(256).fill(5),
+        chars: new Array(256).fill(null).map(() => [
+            0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0 // Placeholder empty char
+        ])
+    };
+
+    class Font {
+        constructor() {
+            this.height = 8;
+            this.widths = []; // byte array
+            this.chars = [];  // array of int arrays
+            this.chars2 = ""; // string mapping
+            this.unknown = 0;
+            this.loaded = false;
+        }
+
+        async load(url) {
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error("Net");
+                const buffer = await response.arrayBuffer();
+                const view = new DataView(buffer);
+                let offset = 0;
+
+                this.height = view.getInt8(offset++);
+                const size = view.getInt32(offset); offset += 4;
+
+                // Read Chars string (UTF-16BE in Java DataInputStream)
+                let charStr = "";
+                for(let i=0; i<size; i++) {
+                    const charCode = view.getUint16(offset); offset += 2;
+                    charStr += String.fromCharCode(charCode);
+                }
+                this.chars2 = charStr;
+
+                // Read Widths
+                this.widths = [];
+                for(let i=0; i<size; i++) {
+                    this.widths.push(view.getInt8(offset++));
+                }
+
+                // Read Char Data
+                this.chars = [];
+                for(let i=0; i<size; i++) {
+                    let charData = [];
+                    for(let j=0; j<this.height; j++) {
+                        charData.push(view.getInt32(offset)); offset += 4;
+                    }
+                    this.chars.push(charData);
+                }
+
+                this.unknown = this.chars2.indexOf('?');
+                if(this.unknown === -1) this.unknown = 0;
+                this.loaded = true;
+                requestRender(); // Re-render when font loads
+                console.log("Font loaded successfully:", url);
+
+            } catch (e) {
+                console.warn("Could not load font file (CORS or missing). Using fallback.", e);
+                // Fallback to simple 5x8 rects for letters if font missing
+                this.loaded = true;
+                this.isFallback = true;
+            }
+        }
+    }
+
+    class GPU {
+        constructor(canvasId) {
+            this.canvas = document.getElementById(canvasId);
+            this.ctx = this.canvas.getContext('2d');
+            this.width = 192;
+            this.height = 128;
+            this.imageData = this.ctx.createImageData(this.width, this.height);
+            this.buf = new Uint32Array(this.imageData.data.buffer);
+            this.font = new Font();
+            // Try to load font from local folder as requested
+            this.font.load('./fonts/ascii.bin');
+        }
+
+        clear(colorHex = "#000000") {
+            const col = this.hexToInt(colorHex);
+            this.buf.fill(col);
+        }
+
+        // Convert #RRGGBB to AABBGGRR (little endian Uint32)
+        hexToInt(hex) {
+            const r = parseInt(hex.substr(1,2), 16);
+            const g = parseInt(hex.substr(3,2), 16);
+            const b = parseInt(hex.substr(5,2), 16);
+            return (255 << 24) | (b << 16) | (g << 8) | r;
+        }
+
+        // BaseGPU.java: set(x, y, color)
+        set(x, y, colorInt) {
+            if(x < 0 || x >= this.width || y < 0 || y >= this.height) return;
+            this.buf[y * this.width + x] = colorInt;
+        }
+
+        // BaseGPU.java: filledRectangle
+        // Note: Java code expects 1-based indexing from Lua, but converts to 0-based internally.
+        // We will accept 1-based args to match Lua/BaseUI logic, then convert.
+        filledRectangle(x, y, w, h, colorHex) {
+            const c = this.hexToInt(colorHex);
+            const xStart = Math.floor(x) - 1;
+            const yStart = Math.floor(y) - 1;
+            const xStop = xStart + Math.floor(w);
+            const yStop = yStart + Math.floor(h);
+
+            // Bounds check mimicking Java
+            const rX = Math.min(xStop, this.width);
+            const rY = Math.min(yStop, this.height);
+
+            for(let i = Math.max(0, xStart); i < rX; i++) {
+                for(let j = Math.max(0, yStart); j < rY; j++) {
+                    this.buf[j * this.width + i] = c;
+                }
+            }
+        }
+
+        // BaseGPU.java: rectangle (stroke)
+        rectangle(x, y, w, h, colorHex) {
+            const c = this.hexToInt(colorHex);
+            const xStart = Math.floor(x) - 1;
+            const yStart = Math.floor(y) - 1;
+            const xStop = xStart + Math.floor(w);
+            const yStop = yStart + Math.floor(h);
+
+            const rX = Math.min(xStop, this.width);
+            const rY = Math.min(yStop, this.height);
+
+            for(let i = Math.max(0, xStart); i < rX; i++) {
+                for(let j = Math.max(0, yStart); j < rY; j++) {
+                    if (i == xStart || i == xStop - 1 || j == yStart || j == yStop - 1) {
+                        this.buf[j * this.width + i] = c;
+                    }
+                }
+            }
+        }
+
+        // BaseGPU.java: drawText
+        drawText(x, y, text, colorHex, size = 1, padding = 1) {
+            if(!text) return;
+            const c = this.hexToInt(colorHex);
+            const font = this.font;
+
+            // Adjust to 0-base
+            let wx = Math.floor(x) - 1;
+            let wy = Math.floor(y) - 1;
+
+            if (font.isFallback) {
+                // Render ugly blocks if font failed to load
+                this.ctx.fillStyle = colorHex;
+                // We'll just draw directly to canvas context for fallback text to be readable
+                // This breaks the "pixel buffer" purity but ensures usability
+                this.flush();
+                this.ctx.font = `${size*8}px monospace`;
+                this.ctx.fillStyle = colorHex;
+                this.ctx.fillText(text, x, y+8);
+                // Invalidate buffer so we don't overwrite
+                this.imageData = this.ctx.getImageData(0,0,192,128);
+                this.buf = new Uint32Array(this.imageData.data.buffer);
+                return;
+            }
+
+            for(let i=0; i<text.length; i++) {
+                const char = text[i];
+                let index = font.chars2.indexOf(char);
+                if(index === -1) index = font.unknown;
+
+                const charData = font.chars[index]; // int[]
+                const w = font.widths[index]; // int
+
+                if (char === ' ') {
+                    // Space logic
+                } else {
+                    for(let j=0; j<charData.length; j++) { // rows
+                        const b = charData[j];
+                        for(let k=0; k<w; k++) { // cols
+                            // Logic from BaseGPU.java: if ((b & 1 << k) != 0)
+                            if ((b & (1 << k)) !== 0) {
+                                // this.fill(wx, k, y, j, size, c)
+                                // fill scales the pixel by size
+                                for(let sx=0; sx<size; sx++) {
+                                    for(let sy=0; sy<size; sy++) {
+                                        this.set(
+                                            wx + k*size + sx,
+                                            wy + j*size + sy,
+                                            c
+                                        );
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                wx += (w + padding) * size;
+            }
+        }
+
+        // Helper: Draw Image (simulated via standard canvas draw for simplicity in designer,
+        // but pixelated to match buffer)
+        drawImage(x, y, scale, imgElem) {
+            this.flush(); // Commit current buffer
+            this.ctx.imageSmoothingEnabled = false;
+            // Draw image on top of canvas
+            this.ctx.drawImage(imgElem, x-1, y-1, imgElem.width*scale, imgElem.height*scale);
+            // Read back into buffer so subsequent draws work
+            this.imageData = this.ctx.getImageData(0,0,192,128);
+            this.buf = new Uint32Array(this.imageData.data.buffer);
+        }
+
+        flush() {
+            this.ctx.putImageData(this.imageData, 0, 0);
+        }
+    }
+
+    // --- BASE UI PORT (Lua -> JS) ---
+    // Porting the exact logic from baseUI.lua to use our GPU object
+
+    const baseUI = {
+        filledRoundedRect: (gpu, x, y, w, h, r, color) => {
+            // center
+            gpu.filledRectangle(x + r, y, w - 2*r, h, color);
+            // left side
+            gpu.filledRectangle(x, y + r, r, h - 2*r, color);
+            // right side
+            gpu.filledRectangle(x + w - r, y + r, r, h - 2*r, color);
+
+            // corners
+            for (let dx = 0; dx < r; dx++) {
+                for (let dy = 0; dy < r; dy++) {
+                    if ((dx*dx + dy*dy) <= (r * r)) {
+                        const col = gpu.hexToInt(color);
+                        // TL
+                        gpu.set(Math.floor(x + r - dx - 1) -1, Math.floor(y + r - dy - 1) -1, col);
+                        // TR
+                        gpu.set(Math.floor(x + w - r + dx) -1, Math.floor(y + r - dy - 1) -1, col);
+                        // BL
+                        gpu.set(Math.floor(x + r - dx - 1) -1, Math.floor(y + h - r + dy) -1, col);
+                        // BR
+                        gpu.set(Math.floor(x + w - r + dx) -1, Math.floor(y + h - r + dy) -1, col);
+                    }
+                }
+            }
+        },
+
+        roundedRectStroke: (gpu, x, y, w, h, r, color) => {
+            const c = gpu.hexToInt(color);
+            // Lines
+            gpu.filledRectangle(x + r, y, w - 2*r, 1, color); // Top
+            gpu.filledRectangle(x + r, y + h - 1, w - 2*r, 1, color); // Bottom
+            gpu.filledRectangle(x, y + r, 1, h - 2*r, color); // Left
+            gpu.filledRectangle(x + w - 1, y + r, 1, h - 2*r, color); // Right
+
+            // Corners
+            for (let dx = 0; dx < r; dx++) {
+                for (let dy = 0; dy < r; dy++) {
+                    let distSq = dx*dx + dy*dy;
+                    if (distSq >= (r-1.5)*(r-1.5) && distSq <= r*r) {
+                        gpu.set(Math.floor(x + r - dx - 1)-1, Math.floor(y + r - dy - 1)-1, c);
+                        gpu.set(Math.floor(x + w - r + dx)-1, Math.floor(y + r - dy - 1)-1, c);
+                        gpu.set(Math.floor(x + r - dx - 1)-1, Math.floor(y + h - r + dy)-1, c);
+                        gpu.set(Math.floor(x + w - r + dx)-1, Math.floor(y + h - r + dy)-1, c);
+                    }
+                }
+            }
+        },
+
+        // Helper to estimate width since we don't have the exact Java font width table perfectly synced without file
+        getTextLength: (text, size) => {
+            return text.length * 6 * size; // approx 5px char + 1px padding
+        },
+
+        fitFontSize: (text, w, h) => {
+            let fontSize = h / 8;
+            if (fontSize < 1) fontSize = 1;
+            while ((text.length * 6 * fontSize) > w && fontSize > 1) {
+                fontSize -= 1;
+            }
+            return Math.floor(fontSize);
+        }
+    };
+
+    // --- APP STATE & LOGIC ---
+
+    const gpu = new GPU('gpuCanvas');
+    let elements = [];
+    let selectedId = null;
+    let nextId = 1;
+    let bgImage = null; // Image Object
+
+    // Inputs
+    const propForm = document.getElementById('prop-form');
+    const noSelection = document.getElementById('no-selection');
+
+    // Drag State
+    let isDragging = false;
+    let dragStartMouse = {x:0, y:0};
+    let dragStartEl = {x:0, y:0};
+
+    function requestRender() {
+        // Clear
+        gpu.clear("#000000");
+
+        // Background
+        if (bgImage) {
+            gpu.drawImage(1, 1, 1, bgImage);
+        }
+
+        // Render Elements
+        elements.forEach(el => {
+            if (el.type === 'button') {
+                // baseUI.createButton logic
+                // Radius calc
+                let clampedRadius = Math.max(0, Math.min(el.radius, 4));
+                let maxR = Math.floor(Math.min(el.w, el.h)/1.75);
+                let pR = Math.floor(clampedRadius * 2 * maxR);
+                pR = Math.min(pR, maxR);
+
+                if (pR > 0) {
+                    baseUI.filledRoundedRect(gpu, el.x, el.y, el.w, el.h, pR, el.colorHex);
+                } else {
+                    gpu.filledRectangle(el.x, el.y, el.w, el.h, el.colorHex);
+                }
+
+                // Stroke
+                if (pR > 0) {
+                    baseUI.roundedRectStroke(gpu, el.x-1, el.y-1, el.w+2, el.h+2, pR, el.strokeColorHex);
+                } else {
+                    gpu.rectangle(el.x-1, el.y-1, el.w+2, el.h+2, el.strokeColorHex);
+                }
+
+                // Text
+                if (el.text) {
+                    const fontSize = baseUI.fitFontSize(el.text, el.w, el.h);
+                    const txtLen = baseUI.getTextLength(el.text, fontSize);
+                    const txtX = (el.x + (el.w/2)) - (txtLen/2);
+                    const txtY = el.y + (el.h/2) - ((7 * Math.floor(fontSize))/2);
+                    gpu.drawText(txtX, txtY, el.text, el.textColorHex, fontSize);
+                }
+
+            } else if (el.type === 'text') {
+                 // baseUI.createTextLabel logic
+                 let clampedRadius = Math.max(0, Math.min(el.radius, 6));
+                 let maxR = Math.floor(Math.min(el.w, el.h)/1.5);
+                 let pR = Math.floor(clampedRadius * 2 * maxR);
+                 pR = Math.min(pR, maxR);
+
+                 if (pR > 0) {
+                    baseUI.filledRoundedRect(gpu, el.x, el.y, el.w, el.h, pR, el.colorHex);
+                 } else {
+                    gpu.filledRectangle(el.x, el.y, el.w, el.h, el.colorHex);
+                 }
+
+                 if (el.text) {
+                    const fontSize = baseUI.fitFontSize(el.text, el.w, el.h);
+                    const txtLen = baseUI.getTextLength(el.text, fontSize);
+                    const txtX = (el.x + (el.w/2)) - (txtLen/2);
+                    const txtY = el.y + (el.h/2) - ((7 * Math.floor(fontSize))/2);
+                    gpu.drawText(txtX, txtY, el.text, el.textColorHex, fontSize);
+                 }
+
+            } else if (el.type === 'image') {
+                // Placeholder for images (since we can't load arbitrary Lua paths)
+                gpu.filledRectangle(el.x, el.y, el.w, el.h, "#333333");
+                gpu.rectangle(el.x, el.y, el.w, el.h, "#ffffff");
+                gpu.drawText(el.x+2, el.y+2, "IMG", "#ffffff");
+            }
+        });
+
+        gpu.flush();
+
+        // Draw Selection Overlay (Directly on context, bypassing buffer)
+        if (selectedId) {
+            const el = elements.find(e => e.id === selectedId);
+            if (el) {
+                gpu.ctx.strokeStyle = "#007acc";
+                gpu.ctx.lineWidth = 1;
+                // Draw rect around bounds (correcting for 1-based indexing in x/y)
+                gpu.ctx.strokeRect(el.x - 1.5, el.y - 1.5, el.w + 1, el.h + 1);
+            }
+        }
+    }
+
+    // Interaction
+    const canvasEl = document.getElementById('gpuCanvas');
+
+    // Scale mapping (Canvas CSS size vs Internal resolution)
+    function getMousePos(evt) {
+        const rect = canvasEl.getBoundingClientRect();
+        const scaleX = canvasEl.width / rect.width;
+        const scaleY = canvasEl.height / rect.height;
+        return {
+            x: (evt.clientX - rect.left) * scaleX + 1, // +1 to match 1-based logic
+            y: (evt.clientY - rect.top) * scaleY + 1
+        };
+    }
+
+    canvasEl.addEventListener('mousedown', (e) => {
+        const m = getMousePos(e);
+        // Find clicked element (reverse order for Z-index)
+        let clicked = null;
+        for (let i = elements.length - 1; i >= 0; i--) {
+            const el = elements[i];
+            if (m.x >= el.x && m.x <= el.x + el.w && m.y >= el.y && m.y <= el.y + el.h) {
+                clicked = el;
+                break;
+            }
+        }
+
+        if (clicked) {
+            selectElement(clicked.id);
+            isDragging = true;
+            dragStartMouse = m;
+            dragStartEl = {x: clicked.x, y: clicked.y};
+        } else {
+            selectedId = null;
+            updateUI();
+            requestRender();
+        }
+    });
+
+    window.addEventListener('mousemove', (e) => {
+        if (isDragging && selectedId) {
+            const m = getMousePos(e);
+            const el = elements.find(x => x.id === selectedId);
+            const dx = m.x - dragStartMouse.x;
+            const dy = m.y - dragStartMouse.y;
+
+            el.x = Math.round(dragStartEl.x + dx);
+            el.y = Math.round(dragStartEl.y + dy);
+
+            // Update inputs
+            document.getElementById('p-x').value = el.x;
+            document.getElementById('p-y').value = el.y;
+
+            requestRender();
+        }
+    });
+
+    window.addEventListener('mouseup', () => {
+        isDragging = false;
+    });
+
+    // --- CRUD ---
+
+    function addElement(type) {
+        const id = nextId++;
+        const el = {
+            id: id,
+            type: type,
+            x: 20, y: 20,
+            w: type === 'text' ? 100 : 40,
+            h: type === 'text' ? 15 : 15,
+            text: type === 'image' ? '' : (type === 'button' ? 'Button' : 'Label'),
+            radius: type === 'button' ? 4 : 0,
+
+            colorVar: type === 'button' ? 'colors.gc' : 'colors.fgg',
+            colorHex: type === 'button' ? '#4CAF50' : '#333333',
+
+            textColorVar: 'colors.tc',
+            textColorHex: '#ffffff',
+
+            strokeColorVar: 'colors.darkerGc',
+            strokeColorHex: '#003300',
+
+            imgPath: 'path/to/img.png',
+            imgScale: 1,
+
+            clickLogic: '',
+            soundFile: 'atm/audio/click.dfpwm',
+            soundEnabled: false
+        };
+        elements.push(el);
+        selectElement(id);
+        requestRender();
+    }
+
+    function selectElement(id) {
+        selectedId = id;
+        const el = elements.find(e => e.id === id);
+
+        noSelection.style.display = 'none';
+        propForm.style.display = 'block';
+
+        // Populate
+        document.getElementById('p-x').value = el.x;
+        document.getElementById('p-y').value = el.y;
+        document.getElementById('p-w').value = el.w;
+        document.getElementById('p-h').value = el.h;
+        document.getElementById('p-text').value = el.text;
+
+        document.getElementById('p-color-var').value = el.colorVar;
+        document.getElementById('p-color-hex').value = el.colorHex;
+        document.getElementById('p-tcolor-var').value = el.textColorVar;
+        document.getElementById('p-tcolor-hex').value = el.textColorHex;
+        document.getElementById('p-scolor-var').value = el.strokeColorVar;
+        document.getElementById('p-scolor-hex').value = el.strokeColorHex;
+
+        document.getElementById('p-radius').value = el.radius;
+        document.getElementById('p-img-path').value = el.imgPath;
+        document.getElementById('p-img-scale').value = el.imgScale;
+        document.getElementById('p-click').value = el.clickLogic;
+        document.getElementById('p-sound').value = el.soundFile;
+        document.getElementById('p-sound-toggle').checked = el.soundEnabled;
+
+        // Visibility
+        const isImg = el.type === 'image';
+        const isBtn = el.type === 'button';
+
+        document.getElementById('group-text').style.display = isImg ? 'none' : 'block';
+        document.getElementById('group-image').style.display = isImg ? 'block' : 'none';
+        document.getElementById('group-click').style.display = isBtn ? 'block' : 'none';
+        document.getElementById('group-sound').style.display = isBtn ? 'block' : 'none';
+        document.getElementById('group-stroke-color').style.display = isBtn ? 'block' : 'none';
+
+        updateUI();
+        requestRender();
+    }
+
+    function updateElement() {
+        if (!selectedId) return;
+        const el = elements.find(e => e.id === selectedId);
+
+        el.x = parseFloat(document.getElementById('p-x').value);
+        el.y = parseFloat(document.getElementById('p-y').value);
+        el.w = parseFloat(document.getElementById('p-w').value);
+        el.h = parseFloat(document.getElementById('p-h').value);
+        el.text = document.getElementById('p-text').value;
+
+        el.colorVar = document.getElementById('p-color-var').value;
+        el.colorHex = document.getElementById('p-color-hex').value;
+        el.textColorVar = document.getElementById('p-tcolor-var').value;
+        el.textColorHex = document.getElementById('p-tcolor-hex').value;
+        el.strokeColorVar = document.getElementById('p-scolor-var').value;
+        el.strokeColorHex = document.getElementById('p-scolor-hex').value;
+
+        el.radius = parseFloat(document.getElementById('p-radius').value);
+        el.imgPath = document.getElementById('p-img-path').value;
+        el.imgScale = parseFloat(document.getElementById('p-img-scale').value);
+
+        el.clickLogic = document.getElementById('p-click').value;
+        el.soundFile = document.getElementById('p-sound').value;
+        el.soundEnabled = document.getElementById('p-sound-toggle').checked;
+
+        requestRender();
+    }
+
+    function updateUI() {
+        if (!selectedId) {
+            noSelection.style.display = 'block';
+            propForm.style.display = 'none';
+        }
+    }
+
+    function deleteElement() {
+        if (!selectedId) return;
+        elements = elements.filter(e => e.id !== selectedId);
+        selectedId = null;
+        updateUI();
+        requestRender();
+    }
+
+    function handleBgUpload(input) {
+        if (input.files && input.files[0]) {
+            const file = input.files[0];
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = () => {
+                    bgImage = img;
+                    requestRender();
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    function generateLua() {
+        let lua = `-- Generated by CC BaseUI Designer\n`;
+        lua += `local w = {}\n`;
+        lua += `local box2d = require("Math/Box2d")\n`;
+        lua += `local colors = require("Misc/Colors")\n`;
+        lua += `local baseUI = require("BaseUI")\n`;
+        lua += `local soundHelper = require("Audio/SoundHelper")\n\n`;
+
+        lua += `w.window = nil\n`;
+        lua += `w.buttons = {}\n`;
+        lua += `w.textLabels = {}\n`;
+        lua += `w.imageLabels = {}\n\n`;
+
+        lua += `function w.create(gpu, window, speaker)\n`;
+        lua += `    w.window = window\n\n`;
+
+        // Background
+        lua += `    -- Background\n`;
+        lua += `    baseUI.setBackgroundToImage(gpu, "atm/backgroun.png", window)\n\n`;
+
+        elements.forEach(el => {
+            const boxStr = `box2d.create({x = ${el.x}, y = ${el.y}}, {x = ${el.w}, y = ${el.h}})`;
+
+            if (el.type === 'button') {
+                let clickFunc = el.clickLogic.trim() || `function()\n            -- logic here\n        end`;
+
+                // Sound Injection
+                if (el.soundEnabled && el.soundFile) {
+                    if (clickFunc.includes('function') && !clickFunc.includes('playSound')) {
+                        // Regex to insert after function signature
+                        clickFunc = clickFunc.replace(/(function\s*\(.*?\))/, `$1\n            soundHelper.playSound(speaker, "${el.soundFile}", 1, true)`);
+                    }
+                }
+
+                lua += `    table.insert(w.buttons, baseUI.createButton(\n`;
+                lua += `        ${boxStr},\n`;
+                lua += `        ${el.radius},\n`;
+                lua += `        ${el.colorVar},\n`;
+                lua += `        window,\n`;
+                lua += `        "${el.text}",\n`;
+                lua += `        ${el.textColorVar},\n`;
+                lua += `        ${el.strokeColorVar},\n`;
+                lua += `        nil,\n`;
+                lua += `        ${clickFunc},\n`;
+                lua += `        true\n`;
+                lua += `    ))\n\n`;
+
+            } else if (el.type === 'text') {
+                lua += `    table.insert(w.textLabels, baseUI.createTextLabel(\n`;
+                lua += `        ${boxStr},\n`;
+                lua += `        ${el.radius},\n`;
+                lua += `        ${el.colorVar},\n`;
+                lua += `        window,\n`;
+                lua += `        "${el.text}",\n`;
+                lua += `        ${el.textColorVar},\n`;
+                lua += `        colors.bg\n`;
+                lua += `    ))\n\n`;
+
+            } else if (el.type === 'image') {
+                lua += `    table.insert(w.imageLabels, baseUI.createImageLabel(\n`;
+                lua += `        ${boxStr},\n`;
+                lua += `        "${el.imgPath || 'image.png'}",\n`;
+                lua += `        gpu,\n`;
+                lua += `        window,\n`;
+                lua += `        ${el.imgScale}\n`;
+                lua += `    ))\n\n`;
+            }
+        });
+
+        lua += `end\n\nreturn w`;
+
+        document.getElementById('lua-result').value = lua;
+        document.getElementById('code-output').classList.add('active');
+    }
+
+    // Initial render
+    requestRender();
+</script>
+
+</body>
+</html>
