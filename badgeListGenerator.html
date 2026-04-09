@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Badge Tool</title>
+    <style>
+        body {
+            background-color: #121212;
+            color: #e0e0e0;
+            font-family: sans-serif;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .section {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            background-color: #1e1e1e;
+            color: white;
+            border: 1px solid #333;
+            box-sizing: border-box;
+        }
+
+        .tag-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .tag-checkbox {
+            display: flex;
+            align-items: center;
+            padding: 5px 10px;
+            background-color: #1e1e1e;
+            border: 1px solid #333;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+
+        textarea {
+            width: 100%;
+            height: 200px;
+            margin-top: 10px;
+            background-color: #1e1e1e;
+            color: #dcdcdc;
+            border: 1px solid #333;
+            font-family: monospace;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="section">
+        <label>Badge Link</label>
+        <input type="text" id="badgeLink" placeholder="https://www.roblox.com/badges/...">
+    </div>
+
+    <div class="section">
+        <label>Rating</label>
+        <input type="text" id="ratingInput" placeholder="8">
+    </div>
+
+    <div class="section">
+        <label>Score</label>
+        <input type="text" id="scoreInput" placeholder="10">
+    </div>
+
+    <div class="section">
+        <label>Tags</label>
+        <div id="tagList" class="tag-list"></div>
+    </div>
+
+    <div class="button-group">
+        <button id="outputBtn">Output</button>
+        <button id="copyBtn">Copy</button>
+        <button id="clearBtn">Clear</button>
+    </div>
+
+    <div class="section">
+        <textarea id="resultOutput" readonly></textarea>
+    </div>
+</div>
+
+<script>
+    const badgeTool = {};
+
+    const tags = [
+        { name: "Platformer", color: "#a4c2f4" },
+        { name: "Survival", color: "#ea9999" },
+        { name: "Endurance", color: "#ffe599" },
+        { name: "Progression", color: "#f1c232" },
+        { name: "Teamwork", color: "#b6d7a8" },
+        { name: "Technical", color: "#f9cb9c" },
+        { name: "Combat", color: "#b4a7d6" },
+        { name: "Bullet Hell", color: "#ffc6f9" },
+        { name: "Speedrun", color: "#cfffe9" },
+        { name: "Rhythm", color: "#e3ffae" },
+        { name: "Puzzle", color: "#d9d9d9" },
+        { name: "RNG", color: "#a2c4c9" },
+        { name: "Obby", color: "#5b97fc" },
+        { name: "Maxmode", color: "#a07373" },
+        { name: "Overall", color: "#d870ff" }
+    ];
+
+    const badgeLink = document.getElementById("badgeLink");
+    const ratingInput = document.getElementById("ratingInput");
+    const scoreInput = document.getElementById("scoreInput");
+    const tagList = document.getElementById("tagList");
+    const resultOutput = document.getElementById("resultOutput");
+
+    const getBadgeId = (val) => {
+        const match = val.match(/\/badges\/(\d+)/);
+        return match ? match[1] : val.replace(/\D/g, "") || "0";
+    };
+
+    const generateLua = () => {
+        const id = getBadgeId(badgeLink.value);
+        const rating = ratingInput.value || "0";
+        const score = scoreInput.value || "0";
+
+        const selectedCheckboxes = document.querySelectorAll('.tag-checkbox input:checked');
+        const selectedTagData = Array.from(selectedCheckboxes).map(cb => JSON.parse(cb.value));
+
+        let tagTable = "{}";
+        if (selectedTagData.length > 0) {
+            const tagStrings = selectedTagData.map(tag => {
+                return `\t\t{\n\t\t\tname = "${tag.name}",\n\t\t\tcolor = Color3.fromHex("${tag.color}")\n\t\t}`;
+            }).join(",\n");
+            tagTable = `{\n${tagStrings}\n\t}`;
+        }
+
+        resultOutput.value = `[${id}] = {\n\trating = ${rating},\n\tscore = ${score},\n\ttags = ${tagTable}\n},`;
+    };
+
+    const copyResult = () => {
+        resultOutput.select();
+        navigator.clipboard.writeText(resultOutput.value);
+    };
+
+    const clearInputs = () => {
+        badgeLink.value = "";
+        ratingInput.value = "";
+        scoreInput.value = "";
+        resultOutput.value = "";
+        document.querySelectorAll('.tag-checkbox input').forEach(cb => cb.checked = false);
+    };
+
+    badgeTool.init = () => {
+        tags.forEach(tag => {
+            const label = document.createElement("label");
+            label.className = "tag-checkbox";
+            label.style.borderLeft = `4px solid ${tag.color}`;
+
+            const checkbox = document.createElement("input");
+            checkbox.type = "checkbox";
+            checkbox.value = JSON.stringify(tag);
+
+            label.appendChild(checkbox);
+            label.appendChild(document.createTextNode(" " + tag.name));
+            tagList.appendChild(label);
+        });
+
+        document.getElementById("outputBtn").addEventListener("click", generateLua);
+        document.getElementById("copyBtn").addEventListener("click", copyResult);
+        document.getElementById("clearBtn").addEventListener("click", clearInputs);
+    };
+
+    badgeTool.init();
+</script>
+
+</body>
+</html>
