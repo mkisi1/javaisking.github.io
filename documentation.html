@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AR Goggles Guide</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            background-color: #121212;
+            color: #e0e0e0;
+            font-family: 'JetBrains Mono', monospace;
+            margin: 0;
+            padding: 40px 20px;
+            min-height: 100vh;
+            box-sizing: border-box; 
+            display: flex;
+            justify-content: center;
+            overflow-y: auto; 
+        }
+
+        main {
+            max-width: 800px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 10px;
+        }
+
+        img, video {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+        }
+
+        a {
+            color: #58a6ff;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        pre {
+            background-color: #2b2d31;
+            border: 1px solid #1e1f22;
+            border-radius: 8px;
+            padding: 16px;
+            width: 100%;
+            max-width: 650px;
+            overflow-x: auto;
+            text-align: left;
+            box-sizing: border-box;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9em;
+            color: #dbdee1;
+            background-color: #2b2d31;
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+
+        pre code {
+            padding: 0;
+            background-color: transparent;
+        }
+
+        .docs {
+            text-align: left;
+            width: 100%;
+            background-color: #1e1f22;
+            padding: 30px;
+            border-radius: 8px;
+            box-sizing: border-box;
+            margin-top: 40px;
+        }
+
+        .docs h2 {
+            margin-top: 0;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+        }
+
+        .docs h3 {
+            color: #58a6ff;
+            margin-top: 30px;
+        }
+
+        .docs ul {
+            padding-left: 20px;
+        }
+
+        .docs li {
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+
+    <main>
+        <h1>hwo do i use ar goggles??</h1>
+        <p>First off you will need a GPU, AR Goggles, and an Advanced Computer. JEI has all of the recipes, so get those crafted.</p>
+        <p>Then you want to place the gpu and computer like this</p>
+        <img src="images/placement.png" alt="Placement">
+        <p>Then bound your ar goggles to your gpu, by sneaking and right clicking the gpu. You can unbound by sneak clicking the air.</p>
+        <img src="images/boundingProcess.png" alt="Bounding Process">
+        <p>Now put on your goggles.</p>
+        <img src="images/glassesOn.png" alt="Glasses On">
+        <p>Now we can actually start rendering and reading inputs from the ar goggles! I won't explain everything as I'll assume you have an idea on how to program in computer craft, if not there are some great youtube tutorials.</p>
+        <p>Now open up your computer by right clicking it and you will be met with the terminal. Start with typing "edit *" * being any filename you choose. Ill be calling mine showcase.</p>
+        <img src="images/creatingFile.png" alt="Creating File">
+        <p>Now we can create the program, and here the first thing I do is set the resolution of the AR goggles with ar.resize(width, height). Then I clear the screen, and finally sync(). </p>
+        <p>If you forget to sync nothing will show on your screen, everytime you execute a function for the ar goggles it gets added to a server side queue, and when you call ar.sync() it sends the entire queue to the client to render it</p>
+        <p>Then we just create the square with ar.drawRoundRectangle(x, y, width, height, radius, color), now you might think color?? wth is 0xFFFF0000</p>
+        <p>This is just another format for color basically you start with 0x, and there are 2 numbers or letters for every channel. ARGB, first 2 numbers are FF and those correspond to 100% so the alpha is 100.
+            The second channel is red and again I did FF which is 100%, then for channel g and b I did 00 which is 0 so no green or blue color. So we should have a fully opaque red round square. You don't have to 
+            memorize any of that, just use a rgb to argb hex convertor.
+        </p>
+        <p>Here's a nice tool to visualize the channels: <a href="https://hugabor.github.io/color-picker/" target="_blank">https://hugabor.github.io/color-picker/</a> thats if you want to understand it.</p>
+        <p>If you just want to pick a color use this tool, remember to copy the ARGB hex: <a href="https://www.myfixguide.com/color-converter/" target="_blank">https://www.myfixguide.com/color-converter/</a></p>
+        <img src="images/program.png" alt="Program">
+        <p>For navigating the file editor press ctrl, this lets you save, run, and exit. With the arrow keys and enter key.</p>
+        <img src="images/redSquare.png" alt="Red Square">       
+        <p>BOOM 67, we got the red square. Thats about all for the tutorial, here is the full code also</p>
+
+<pre><code>local gpu = peripheral.find("tm_gpu")
+local ar = gpu.getAR()
+
+ar.resize(1920, 1080)
+ar.clear()
+ar.sync()
+
+ar.drawRoundRectangle(10, 10, 200, 200, 20, 0xFFFF0000)
+ar.sync()</code></pre>
+
+        <p>Here is a quick showcase of what it looks like running:</p>
+        <video src="images/showcase.mp4" controls></video>
+
+        <div class="docs">
+            <h2>ar goggles docs</h2>
+            <p>Here is all the stuff you can actually do with the api. also remmeber to keep the numbers like x y width height, u can use math.floor()</p>
+            
+            <h3>base commands</h3>
+            <p><code>ar.resize(width, height)</code><br>this just resizes the overlay not your monitor, use whatever suits ur needs.</p>
+            <p><code>ar.clear()</code><br>this clears the overlay screen and removes all commands in queue.</p>
+            <p><code>ar.sync()</code><br>IMPORTANT as shown before this is what makes the server tell the client what the computer has been doing.</p>
+
+            <h3>input</h3>
+            <p><code>ar.captureMouse()</code><br>this opens an invisible screen which then releases the mouse letting u make custom interfaces n stuff. To get out just press esc or right alt.</p>
+            <p><code>ar.releaseMouse()</code><br>closes the screen letting you go back to minecraft interface</p>
+
+            <h3>custom fonts</h3>
+            <p><code>ar.loadFont(path, name)</code><br>this is to load a .ttf font if you want something custom, advanced contact me if you get this far.</p>
+            <p><code>ar.getCustomTextLength(text, size, fontName)</code><br>how many pixels wide the certain text u rendered with your font is.</p>
+
+            <h3>text rendering</h3>
+            <p><code>ar.drawText(x, y, text, color, scale)</code><br>uses default minecraft chunky text to render, SIZE IS AN INTEGER</p>
+            <p><code>ar.getTextLength(text)</code><br>how many pixels wide the default text is</p>
+            <p><code>ar.drawCustomText(x, y, text, color, size, fontName)</code><br>draws the custom font which is a lot smooth usually, size can be a float aka have decimals.</p>
+
+            <h3>events</h3>
+            <ul>
+                <li><code>"ar_click", button, x, y</code> - button 0 is left, 1 is right, 2 is middle.</li>
+                <li><code>"ar_up", button, x, y</code> - same but when you let go.</li>
+                <li><code>"ar_move", x, y</code> - fires every tick if your mouse moved.</li>
+                <li><code>"ar_scroll", direction, x, y</code> - positive/negative depending on the scroll wheel.</li>
+                <li><code>"ar_char", character</code> - the actual letter typed /li>
+                <li><code>"ar_keydown", keycode</code> / <code>"ar_keyup", keycode</code> - raw GLFW hardware IDs (like 257 for Enter). Serach it up if u need the lwjgl keycods</li>
+                <li><code>"ar_escape"</code> - fires when you press right ALT or ESC to break the mouse lock. listen for this so you can break while true loops.</li>
+            </ul>
+
+            <h3>drawing!!!</h3>
+            <p><code>ar.drawRectangle(x, y, w, h, color)</code><br>solid rectangle</p>
+            <p><code>ar.drawRectangleOutline(x, y, w, h, thickness, color)</code><br>rectangle outline</p>
+            <p><code>ar.drawRoundRectangle(x, y, w, h, radius, color)</code><br>solid rectangle but with radius parameter</p>
+            <p><code>ar.drawRoundRectangleOutline(x, y, w, h, radius, thickness, color)</code><br>round rectangle outline</p>
+            <p><code>ar.drawSmoothLine(x1, y1, x2, y2, color, thickness)</code><br>draws a smooth line</p>
+            <p><code>ar.drawItem(x, y, itemId, scale)</code><br> this draws an item using its item id so if u want a diamond its "minecraft:diamond". scale is an integer</p>
+        </div>
+    </main>
+
+</body>
+</html>
