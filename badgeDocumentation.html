@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BadgeList Documentation</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            background-color: #121212;
+            color: #e0e0e0;
+            font-family: 'JetBrains Mono', monospace;
+            margin: 0;
+            padding: 40px 20px;
+            min-height: 100vh;
+            box-sizing: border-box; 
+            display: flex;
+            justify-content: center;
+            overflow-y: auto; 
+        }
+
+        main {
+            max-width: 800px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 10px;
+        }
+
+        img, video {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+        }
+
+        a {
+            color: #58a6ff;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        pre {
+            background-color: #2b2d31;
+            border: 1px solid #1e1f22;
+            border-radius: 8px;
+            padding: 16px;
+            width: 100%;
+            max-width: 650px;
+            overflow-x: auto;
+            text-align: left;
+            box-sizing: border-box;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9em;
+            color: #dbdee1;
+            background-color: #2b2d31;
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+
+        pre code {
+            padding: 0;
+            background-color: transparent;
+        }
+
+        .docs {
+            text-align: left;
+            width: 100%;
+            background-color: #1e1f22;
+            padding: 30px;
+            border-radius: 8px;
+            box-sizing: border-box;
+            margin-top: 40px;
+        }
+
+        .docs h2 {
+            margin-top: 0;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+        }
+
+        .docs h3 {
+            color: #58a6ff;
+            margin-top: 30px;
+        }
+
+        .docs ul {
+            padding-left: 20px;
+        }
+
+        .docs li {
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+
+    <main>
+        <h1>How to maintain the badge list!</h1>
+        <p>-----------------------------------</p>
+        <p>Q: Where do I find the lists? <br> <br> A: There are located under ServerStorage, </p>
+        <img src="images/lists.png" alt="List locations">
+        <p>-----------------------------------</p>
+        <p>Q: How do I add an entry to a list? <br> <br> A: Start by heading to the <a href="https://portfolio.wat.dog/badgeListGenerator.html" target="_blank">Badge Entry Generator</a>, then paste your badge link, give it the rating, score, and tags, then press <b>1</b> wait, then <b>2</b></b></p>
+        <img src="images/generateBadge.png" alt="Generate Badge">
+        <p>Now that you have your badge entry copied we can go back to the first question, find the list you want to add this entry to and double click it. <br> Then scroll all the way down till you see this comma.</p>
+        <img src="images/endOfLine.png" alt="End of Line">
+        <p>Now just go down a line and paste your new badge entry.</p>
+        <img src="images/entryAdded.png" alt="Added Entry">
+        <p>Done!</p>
+        <p>-----------------------------------</p>
+        <p>Q: How do I add an update an entry on the list? <br> There are 2 ways to go about this, if you want to change the tags you will need to go back to the <a href="https://portfolio.wat.dog/badgeListGenerator.html" target="_blank">Badge Entry Generator</a> to regenerate the entry with the new tags.<br>
+            But if you want to edit the score or rating, you won't need to do that.</p>
+        <p>First to find the badge entry, go to the list it's in and press <b>CTRL+F</b></p>
+        <img src="images/badgeSearch.png" alt="Search for badge">
+        <p>In here you want to paste your badge ID that you want to edit. You should have a match and it will auto scroll you to where the badge is and it will highlight it.</p>
+        <img src="images/matchFound.png" alt="Match Found">
+        <p>Now that we are here if you just want to change rating or score this is the last step. <b>Score is h</b> and <b>rating is g</b>, you just have to change the number that it's equal to. <br> Though remember that rating is from 1-14 integers only, it's basically whatever rating you want *2 so if you want 3.5 stars put 7, if you want 1.5 put 3.</p>
+        <p>If you are trying to edit the tags instead, head to the badge entry generator and regenerate the badge, then select the entire entry and paste it in, literally just replace the old with the new.</p>
+        <p>-----------------------------------</p>
+        <p>Q: How do I keep the lists up to date? <br> A: You want to use the <a href="https://portfolio.wat.dog/updateList.html" target="_blank">List updater</a>, you will want to do this maybe like once a week.
+        <p>All you have to do is to go to each list, press CTRL+A to select all, copy, go to the list updator, paste the entire list, press Update List. Wait and copy the output, after copying the output just replace the entire list with the output.</p>
+        <img src="images/updateList.png" alt="Update List">
+        <p>-----------------------------------</p>
+
+        <p>Anyways that's all <br> PS: I'm not the best explainer so if you got confused somewhere lmk and I'll try to help.</p>
+</body>
+</html>
