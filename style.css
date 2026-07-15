@@ -18,6 +18,10 @@ main {
     color: aliceblue;
 }
 
+.vidTitle {
+    color: aliceblue;
+}
+
 /* VIDEO BOX STYLING */
 .box {
     width: 35%;
